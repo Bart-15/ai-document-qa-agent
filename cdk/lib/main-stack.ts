@@ -1,16 +1,23 @@
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
+import { S3Stack } from "./s3-stack";
+import { LambdaStack } from "./lambda-stack";
+import { ApiGatewayStack } from "./api-gw-stack";
 // import * as sqs from 'aws-cdk-lib/aws-sqs';
 
 export class MainStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    // The code that defines your stack goes here
+    const s3Stack = new S3Stack(this, "S3Stack");
 
-    // example resource
-    // const queue = new sqs.Queue(this, 'CdkQueue', {
-    //   visibilityTimeout: cdk.Duration.seconds(300)
-    // });
+    const lambdaStack = new LambdaStack(this, "LambdaStack", {
+      bucket: s3Stack.bucket,
+    });
+
+    new ApiGatewayStack(this, "ApiGatewayStack", {
+      getPresignedUrlFunction: lambdaStack.getPresignedUrlFunction,
+      askDocumentFunction: lambdaStack.askDocumentFunction,
+    });
   }
 }
