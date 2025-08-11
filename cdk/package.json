@@ -1,8 +1,8 @@
 {
-  "name": "ai-document-qa-agent",
+  "name": "document-qa-agent-app",
   "version": "0.1.0",
   "bin": {
-    "ai-document-qa-agent": "bin/ai-document-qa-agent.js"
+    "document-qa-agent-app": "bin/document-qa-agent-app.js"
   },
   "scripts": {
     "build": "tsc",
