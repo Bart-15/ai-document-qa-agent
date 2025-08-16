@@ -3,7 +3,6 @@ import { Construct } from "constructs";
 import { S3Stack } from "./s3-stack";
 import { LambdaStack } from "./lambda-stack";
 import { ApiGatewayStack } from "./api-gw-stack";
-// import * as sqs from 'aws-cdk-lib/aws-sqs';
 
 export class MainStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -18,6 +17,7 @@ export class MainStack extends cdk.Stack {
     new ApiGatewayStack(this, "ApiGatewayStack", {
       getPresignedUrlFunction: lambdaStack.getPresignedUrlFunction,
       askDocumentFunction: lambdaStack.askDocumentFunction,
+      processDocumentFunction: lambdaStack.processDocumentFunction,
     });
   }
 }
