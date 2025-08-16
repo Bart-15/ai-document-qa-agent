@@ -7,6 +7,7 @@ import * as path from "path";
 export interface ApiGatewayStackProps extends cdk.StackProps {
   getPresignedUrlFunction: lambda.IFunction;
   askDocumentFunction: lambda.IFunction;
+  processDocumentFunction: lambda.IFunction;
 }
 
 export class ApiGatewayStack extends cdk.Stack {
@@ -33,6 +34,12 @@ export class ApiGatewayStack extends cdk.Stack {
     askResource.addMethod(
       "POST",
       new apigateway.LambdaIntegration(props.askDocumentFunction)
+    );
+
+    const processDocumentResource = api.root.addResource("process-document");
+    processDocumentResource.addMethod(
+      "POST",
+      new apigateway.LambdaIntegration(props.processDocumentFunction)
     );
 
     new cdk.CfnOutput(this, "ApiUrl", {
