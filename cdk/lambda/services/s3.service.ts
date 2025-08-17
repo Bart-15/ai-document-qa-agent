@@ -5,6 +5,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import "dotenv/config";
+import { v4 as uuidv4 } from "uuid";
 
 const s3Client = new S3Client({});
 
@@ -23,10 +24,18 @@ export class S3Service {
     return getSignedUrl(s3Client, command, { expiresIn: 3600 }); // 1 hour
   }
 
-  generateFileName(extension: string): string {
-    return `${Date.now()}-${Math.random()
-      .toString(36)
-      .substring(2, 15)}.${extension}`;
+  generateFileName(originalFileName: string, extension: string): string {
+    // Sanitize the original filename by removing special characters and spaces
+    const sanitizedName = originalFileName
+      .replace(/[^a-zA-Z0-9]/g, "-") // Replace special chars with hyphen
+      .toLowerCase()
+      .replace(/-+/g, "-") // Replace multiple consecutive hyphens with single hyphen
+      .replace(/^-|-$/g, ""); // Remove leading and trailing hyphens
+
+    // Generate UUID for uniqueness
+    const uuid = uuidv4();
+
+    return `${uuid}-${sanitizedName}.${extension}`;
   }
 
   async getObject(key: string) {
