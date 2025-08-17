@@ -93,6 +93,9 @@ export class LambdaStack extends Stack {
       }
     );
 
-    props.bucket.grantRead(this.processDocumentFunction);
+    if (props.bucket) {
+      props.bucket.grantRead(this.processDocumentFunction);
+      props.bucket.grantReadWrite(this.getPresignedUrlFunction); // Grant both read and write permissions
+    }
   }
 }
