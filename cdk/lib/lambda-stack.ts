@@ -15,6 +15,7 @@ export class LambdaStack extends Stack {
   public readonly getPresignedUrlFunction: NodejsFunction;
   public readonly askDocumentFunction: NodejsFunction;
   public readonly processDocumentFunction: NodejsFunction;
+  public readonly streamAskDocumentFunction: NodejsFunction;
 
   constructor(scope: Construct, id: string, props: LambdaStackProps) {
     super(scope, id, props);
@@ -56,7 +57,12 @@ export class LambdaStack extends Stack {
       environment: {
         ALLOWED_ORIGINS:
           process.env.ALLOWED_ORIGINS ?? "http://localhost:5173/",
+        PINECONE_API_KEY: process.env.PINECONE_API_KEY!,
+        OPENAI_API_KEY: process.env.OPENAI_API_KEY!,
+        PINECONE_INDEX: process.env.PINECONE_INDEX!,
       },
+      timeout: cdk.Duration.seconds(30),
+      memorySize: 1024,
     });
 
     this.processDocumentFunction = new NodejsFunction(
