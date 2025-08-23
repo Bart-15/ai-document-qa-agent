@@ -11,6 +11,7 @@ import "dotenv/config";
 
 interface LambdaStackProps extends StackProps {
   bucket: s3.IBucket;
+  documentProcessingQueue: sqs.IQueue;
 }
 
 export class LambdaStack extends Stack {
@@ -18,7 +19,6 @@ export class LambdaStack extends Stack {
   public readonly askDocumentFunction: NodejsFunction;
   public readonly processDocumentFunction: NodejsFunction;
   public readonly processChunkFunction: NodejsFunction;
-  public readonly documentProcessingQueue: sqs.Queue;
   public readonly streamAskDocumentFunction: NodejsFunction;
 
   constructor(scope: Construct, id: string, props: LambdaStackProps) {
@@ -93,28 +93,7 @@ export class LambdaStack extends Stack {
           PINECONE_ENVIRONMENT: process.env.PINECONE_ENVIRONMENT!,
           PINECONE_INDEX: process.env.PINECONE_INDEX!,
           OPENAI_API_KEY: process.env.OPENAI_API_KEY!,
-          DOCUMENT_PROCESSING_QUEUE_URL:
-            process.env.DOCUMENT_PROCESSING_QUEUE_URL!,
-        },
-      }
-    );
-
-    // Create DLQ for failed processing
-    const dlq = new sqs.Queue(this, "DocumentProcessingDLQ", {
-      queueName: "document-processing-dlq",
-      retentionPeriod: cdk.Duration.days(14),
-    });
-
-    // Create main processing queue
-    this.documentProcessingQueue = new sqs.Queue(
-      this,
-      "DocumentProcessingQueue",
-      {
-        queueName: "document-processing-queue",
-        visibilityTimeout: cdk.Duration.minutes(5),
-        deadLetterQueue: {
-          queue: dlq,
-          maxReceiveCount: 3,
+          DOCUMENT_PROCESSING_QUEUE_URL: props.documentProcessingQueue.queueUrl,
         },
       }
     );
@@ -149,7 +128,7 @@ export class LambdaStack extends Stack {
 
     // Add SQS trigger to chunk processing Lambda
     this.processChunkFunction.addEventSource(
-      new lambdaEventSources.SqsEventSource(this.documentProcessingQueue, {
+      new lambdaEventSources.SqsEventSource(props.documentProcessingQueue, {
         batchSize: 10,
       })
     );
@@ -161,10 +140,10 @@ export class LambdaStack extends Stack {
     }
 
     // Grant SQS permissions
-    this.documentProcessingQueue.grantSendMessages(
+    props.documentProcessingQueue.grantSendMessages(
       this.processDocumentFunction
     );
-    this.documentProcessingQueue.grantConsumeMessages(
+    props.documentProcessingQueue.grantConsumeMessages(
       this.processChunkFunction
     );
   }
