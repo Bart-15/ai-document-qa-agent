@@ -2,6 +2,7 @@ import "dotenv/config";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { S3Service } from "./services/s3.service";
 import { createResponse } from "./utils/response";
+import { allowedTypes } from "./utils/const";
 
 const s3Service = new S3Service();
 
@@ -17,10 +18,23 @@ export const handler = async (
 
     // Parse request body
     const body = event.body ? JSON.parse(event.body) : {};
-    const contentType = body.contentType || "image/jpeg";
-    const extension = contentType.split("/")[1] || "jpg";
+    const contentType = body.contentType;
+    const originalFileName = body.fileName;
 
-    const fileName = s3Service.generateFileName(extension);
+    if (!originalFileName) {
+      return createResponse(400, {
+        message: "fileName is required in the request",
+      });
+    }
+
+    if (!contentType || !allowedTypes[contentType]) {
+      return createResponse(400, {
+        message: "Invalid content type. Only PDF and DOCX files are supported.",
+      });
+    }
+
+    const extension = allowedTypes[contentType];
+    const fileName = s3Service.generateFileName(originalFileName, extension);
     const url = await s3Service.getPresignedUrl(
       process.env.BUCKET_NAME,
       fileName,
