@@ -23,16 +23,26 @@ export class PineconeService {
       };
     }>
   ) {
-    const index = await this.pc.index(indexName);
+    const index = this.pc.index(indexName);
     await index.upsert(vectors);
   }
 
-  async queryIndex(indexName: string, vector: number[], topK: number = 5) {
+  async queryIndex(
+    indexName: string,
+    vector: number[],
+    topK: number = 5,
+    documentKey: string
+  ) {
     const index = this.pc.index(indexName);
     const queryRes = await index.query({
       vector,
       topK,
       includeMetadata: true,
+      filter: {
+        source: {
+          $eq: documentKey,
+        },
+      },
     });
     return queryRes;
   }
