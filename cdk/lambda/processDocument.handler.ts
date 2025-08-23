@@ -3,15 +3,17 @@ import { createResponse } from "./utils/response";
 import "dotenv/config";
 import fs from "fs";
 import path from "path";
+import { SQSClient, SendMessageBatchCommand } from "@aws-sdk/client-sqs";
 
-import { S3Service } from "./services/s3.service";
-import { PineconeService } from "./services/pinecone.service";
 import { DocumentProcessingService } from "./services/document-processing.service";
+import { S3Service } from "./services/s3.service";
 
 // Initialize services
 const s3Service = new S3Service();
-const pineconeService = new PineconeService();
 const documentService = new DocumentProcessingService();
+const sqsClient = new SQSClient({});
+
+const BATCH_SIZE = 10; // Number of messages to send in each batch
 
 export const handler = async (
   event: APIGatewayProxyEvent
@@ -43,30 +45,54 @@ export const handler = async (
     tmpFilePath = path.join("/tmp", path.basename(body.key));
     fs.writeFileSync(tmpFilePath, Buffer.from(buffer));
 
-    // Process document and generate embeddings
-    const { chunks, embeddings } = await documentService.processDocument(
-      tmpFilePath
-    );
+    // Split document into chunks
+    const { chunks } = await documentService.processDocument(tmpFilePath);
 
-    // Prepare vectors for Pinecone
-    const vectors = embeddings.map((values, i) => ({
-      id: `${body.key}-${i}`,
-      values,
-      metadata: {
-        text: chunks[i].pageContent,
-        source: body.key,
-      },
-    }));
+    // Send chunks to SQS in batches
+    const queueUrl = process.env.DOCUMENT_PROCESSING_QUEUE_URL;
+    if (!queueUrl) {
+      throw new Error(
+        "DOCUMENT_PROCESSING_QUEUE_URL environment variable is not set"
+      );
+    }
 
-    // Store vectors in Pinecone
-    await pineconeService.upsertVectors(process.env.PINECONE_INDEX!, vectors);
+    let processedChunks = 0;
+    for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
+      const batch = chunks.slice(i, i + BATCH_SIZE);
+      const entries = batch.map((chunk, index) => ({
+        Id: `${i + index}`,
+        MessageBody: JSON.stringify({
+          chunk: chunk.pageContent,
+          documentKey: body.key,
+          chunkIndex: i + index,
+          totalChunks: chunks.length,
+        }),
+      }));
 
-    return createResponse(200, {
-      message: "Document processed successfully",
-      chunks: chunks.length,
+      const command = new SendMessageBatchCommand({
+        QueueUrl: queueUrl,
+        Entries: entries,
+      });
+
+      await sqsClient.send(command);
+      processedChunks += batch.length;
+
+      console.log(
+        `Sent batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(
+          chunks.length / BATCH_SIZE
+        )}`
+      );
+    }
+
+    return createResponse(202, {
+      message: "Document processing started",
+      status: "PROCESSING",
       documentKey: body.key,
+      totalChunks: chunks.length,
+      queuedChunks: processedChunks,
     });
   } catch (error) {
+    console.error("Error processing document:", error);
     return createResponse(500, {
       message: `Failed to process document: ${error}`,
     });
@@ -74,7 +100,5 @@ export const handler = async (
     if (tmpFilePath && fs.existsSync(tmpFilePath)) {
       fs.unlinkSync(tmpFilePath);
     }
-
-    console.log("tempFile cleaned", tmpFilePath);
   }
 };

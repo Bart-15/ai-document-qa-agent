@@ -13,6 +13,14 @@ export class DocumentProcessingService {
     });
   }
 
+  async generateEmbedding(text: string): Promise<number[]> {
+    const embedding = await this.embeddings.embedQuery(text);
+    if (!embedding || embedding.length === 0) {
+      throw new Error("Failed to generate embedding for text chunk");
+    }
+    return embedding;
+  }
+
   async processDocument(filePath: string) {
     // Load PDF
     const loader = new PDFLoader(filePath);
@@ -33,17 +41,8 @@ export class DocumentProcessingService {
       throw new Error("No text chunks created from PDF");
     }
 
-    // Generate embeddings
-    const textArray = chunks.map((c) => c.pageContent);
-    const embeddingsArray = await this.embeddings.embedDocuments(textArray);
-
-    if (!Array.isArray(embeddingsArray) || embeddingsArray.length === 0) {
-      throw new Error("Failed to generate embeddings");
-    }
-
     return {
       chunks,
-      embeddings: embeddingsArray,
     };
   }
 }

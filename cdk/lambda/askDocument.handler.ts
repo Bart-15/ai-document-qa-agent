@@ -17,13 +17,24 @@ export const handler = async (event: APIGatewayProxyEventV2) => {
       });
     }
 
+    if (!body.documentKey) {
+      return createResponse(400, {
+        message: "Document key is required in request body",
+      });
+    }
+
     const pinceConeIndex = process.env.PINECONE_INDEX!;
 
     // Get embeddings
     const vector = await openaiService.generateEmbeddings(question);
 
     // Query Pinecone
-    const queryRes = await pineconeService.queryIndex(pinceConeIndex, vector);
+    const queryRes = await pineconeService.queryIndex(
+      pinceConeIndex,
+      vector,
+      5,
+      body.documentKey
+    );
 
     // Build context from metadata
     const context = pineconeService.getContext(queryRes.matches ?? []);
