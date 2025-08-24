@@ -1,12 +1,14 @@
 import { OpenAI } from "openai";
-import "dotenv/config";
+import { getSanitizedConfig } from "../../config/environment";
+
+const config = getSanitizedConfig(["OPENAI_API_KEY"]);
 
 export class OpenAIService {
   private openai: OpenAI;
 
   constructor() {
     this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY!,
+      apiKey: config.OPENAI_API_KEY,
     });
   }
 

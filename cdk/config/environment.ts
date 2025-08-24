@@ -1,4 +1,5 @@
-import "dotenv/config";
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+require("dotenv").config().parsed;
 
 interface EnvironmentConfig {
   allowedOrigins: string[];
@@ -27,4 +28,46 @@ export const getEnvironmentConfig = (): EnvironmentConfig => {
   return {
     allowedOrigins,
   };
+};
+
+// env variable config
+interface ENV {
+  PINECONE_API_KEY: string | undefined;
+  PINECONE_ENVIRONMENT: string | undefined;
+  PINECONE_INDEX: string | undefined;
+  OPENAI_API_KEY: string | undefined;
+  DOCUMENT_PROCESSING_QUEUE_URL: string | undefined;
+}
+
+interface Config {
+  PINECONE_API_KEY: string;
+  PINECONE_ENVIRONMENT: string;
+  PINECONE_INDEX: string;
+  OPENAI_API_KEY: string;
+  DOCUMENT_PROCESSING_QUEUE_URL: string;
+}
+
+export const getConfig = (): ENV => {
+  return {
+    PINECONE_API_KEY: process.env.PINECONE_API_KEY,
+    PINECONE_ENVIRONMENT: process.env.PINECONE_ENVIRONMENT,
+    PINECONE_INDEX: process.env.PINECONE_INDEX,
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    DOCUMENT_PROCESSING_QUEUE_URL: process.env.DOCUMENT_PROCESSING_QUEUE_URL,
+  };
+};
+
+// ✅ validate only what you pass in
+export const getSanitizedConfig = <K extends keyof ENV>(
+  requiredKeys: K[]
+): Pick<Required<ENV>, K> & ENV => {
+  const config = getConfig();
+
+  for (const key of requiredKeys) {
+    if (!config[key]) {
+      throw new Error(`❌ Missing required key: ${key}`);
+    }
+  }
+
+  return config as Pick<Required<ENV>, K> & ENV;
 };

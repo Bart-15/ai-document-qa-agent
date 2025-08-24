@@ -1,29 +1,28 @@
 import type { APIGatewayProxyEventV2 } from "aws-lambda";
 import { OpenAIService } from "./services/openai.service";
 import { PineconeService } from "./services/pinecone.service";
-import { createResponse } from "./utils/response";
+import { createResponse, handleError } from "../middleware/errorHandler";
+import {
+  AskDocumentInput,
+  askDocumentSchema,
+} from "./validation/askDocument.validation";
+import validateResource from "../middleware/validateResource";
+import { getSanitizedConfig } from "../config/environment";
+
+const config = getSanitizedConfig(["PINECONE_INDEX"]);
 
 const openaiService = new OpenAIService();
 const pineconeService = new PineconeService();
 
 export const handler = async (event: APIGatewayProxyEventV2) => {
   try {
-    const body = event.body ? JSON.parse(event.body) : {};
-    const question = body.question;
+    const body: AskDocumentInput = event.body ? JSON.parse(event.body) : {};
 
-    if (!question) {
-      return createResponse(400, {
-        message: "Question is required in request body",
-      });
-    }
+    validateResource(askDocumentSchema, body);
 
-    if (!body.documentKey) {
-      return createResponse(400, {
-        message: "Document key is required in request body",
-      });
-    }
+    const { question, documentKey } = body;
 
-    const pinceConeIndex = process.env.PINECONE_INDEX!;
+    const pinceConeIndex = config.PINECONE_INDEX!;
 
     // Get embeddings
     const vector = await openaiService.generateEmbeddings(question);
@@ -33,7 +32,7 @@ export const handler = async (event: APIGatewayProxyEventV2) => {
       pinceConeIndex,
       vector,
       5,
-      body.documentKey
+      documentKey
     );
 
     // Build context from metadata
@@ -45,9 +44,6 @@ export const handler = async (event: APIGatewayProxyEventV2) => {
     return createResponse(200, { answer });
   } catch (err) {
     console.error("❌ Error:", JSON.stringify(err, null, 2));
-    return createResponse(500, {
-      message: "Internal server error",
-      error: err instanceof Error ? err.message : err,
-    });
+    return handleError(err, event);
   }
 };

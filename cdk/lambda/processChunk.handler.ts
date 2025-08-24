@@ -1,7 +1,9 @@
 import { SQSEvent, SQSHandler } from "aws-lambda";
 import { PineconeService } from "./services/pinecone.service";
 import { DocumentProcessingService } from "./services/document-processing.service";
-import "dotenv/config";
+import { getSanitizedConfig } from "../config/environment";
+
+const config = getSanitizedConfig(["PINECONE_INDEX"]);
 
 // Initialize services
 const pineconeService = new PineconeService();
@@ -35,9 +37,7 @@ export const handler: SQSHandler = async (event: SQSEvent) => {
       };
 
       // Store vector in Pinecone
-      await pineconeService.upsertVectors(process.env.PINECONE_INDEX!, [
-        vector,
-      ]);
+      await pineconeService.upsertVectors(config.PINECONE_INDEX!, [vector]);
 
       console.log(
         `Successfully processed chunk ${message.chunkIndex + 1}/${

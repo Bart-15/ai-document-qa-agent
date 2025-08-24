@@ -1,14 +1,16 @@
 import { OpenAIEmbeddings } from "@langchain/openai";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
-import "dotenv/config";
+import { getSanitizedConfig } from "../../config/environment";
+
+const config = getSanitizedConfig(["OPENAI_API_KEY"]);
 
 export class DocumentProcessingService {
   private embeddings: OpenAIEmbeddings;
 
   constructor() {
     this.embeddings = new OpenAIEmbeddings({
-      openAIApiKey: process.env.OPENAI_API_KEY,
+      openAIApiKey: config.OPENAI_API_KEY,
       modelName: "text-embedding-3-small",
     });
   }

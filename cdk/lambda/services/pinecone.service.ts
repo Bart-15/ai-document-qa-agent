@@ -3,13 +3,15 @@ import {
   type RecordMetadata,
   type ScoredPineconeRecord,
 } from "@pinecone-database/pinecone";
-import "dotenv/config";
+import { getSanitizedConfig } from "../../config/environment";
+
+const config = getSanitizedConfig(["PINECONE_ENVIRONMENT"]);
 
 export class PineconeService {
   public pc: Pinecone;
 
   constructor() {
-    this.pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY! });
+    this.pc = new Pinecone({ apiKey: config.PINECONE_API_KEY! });
   }
 
   async upsertVectors(
