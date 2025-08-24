@@ -75,6 +75,7 @@ export class LambdaStack extends Stack {
         OPENAI_API_KEY: config.OPENAI_API_KEY!,
         PINECONE_INDEX: config.PINECONE_INDEX!,
         PINECONE_ENVIRONMENT: config.PINECONE_ENVIRONMENT!,
+        SESSION_TABLE_NAME: props.sessionTable.tableName,
       },
       timeout: cdk.Duration.seconds(30),
       memorySize: 1024,
@@ -149,6 +150,9 @@ export class LambdaStack extends Stack {
       props.bucket.grantRead(this.processChunkFunction);
       props.bucket.grantReadWrite(this.getPresignedUrlFunction);
     }
+
+    // Grant DynamoDB permissions
+    props.sessionTable.grantReadWriteData(this.askDocumentFunction);
 
     // Grant SQS permissions
     props.documentProcessingQueue.grantSendMessages(
