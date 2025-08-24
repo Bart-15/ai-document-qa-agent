@@ -1,5 +1,4 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
-import "dotenv/config";
 import fs from "fs";
 import path from "path";
 import { SQSClient, SendMessageBatchCommand } from "@aws-sdk/client-sqs";
@@ -12,6 +11,9 @@ import {
   processDocumentSchema,
 } from "./validation/processDocument.validation";
 import validateResource from "../middleware/validateResource";
+import { getSanitizedConfig } from "../config/environment";
+
+const config = getSanitizedConfig(["DOCUMENT_PROCESSING_QUEUE_URL"]);
 
 // Initialize services
 const s3Service = new S3Service();
@@ -58,12 +60,7 @@ export const handler = async (
     const { chunks } = await documentService.processDocument(tmpFilePath);
 
     // Send chunks to SQS in batches
-    const queueUrl = process.env.DOCUMENT_PROCESSING_QUEUE_URL;
-    if (!queueUrl) {
-      throw new Error(
-        "DOCUMENT_PROCESSING_QUEUE_URL environment variable is not set"
-      );
-    }
+    const queueUrl = config.DOCUMENT_PROCESSING_QUEUE_URL;
 
     let processedChunks = 0;
     for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
