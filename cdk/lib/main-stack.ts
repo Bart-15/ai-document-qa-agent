@@ -31,6 +31,7 @@ export class MainStack extends cdk.Stack {
       getPresignedUrlFunction: lambdaStack.getPresignedUrlFunction,
       processDocumentFunction: lambdaStack.processDocumentFunction,
       askDocumentFunction: lambdaStack.askDocumentFunction,
+      getSessionFunction: lambdaStack.getSessionFunction,
     });
   }
 }

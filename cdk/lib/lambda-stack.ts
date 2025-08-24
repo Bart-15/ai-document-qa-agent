@@ -30,6 +30,7 @@ export class LambdaStack extends Stack {
   public readonly processDocumentFunction: NodejsFunction;
   public readonly processChunkFunction: NodejsFunction;
   public readonly streamAskDocumentFunction: NodejsFunction;
+  public readonly getSessionFunction: NodejsFunction;
 
   constructor(scope: Construct, id: string, props: LambdaStackProps) {
     super(scope, id, props);
@@ -138,6 +139,25 @@ export class LambdaStack extends Stack {
       }
     );
 
+    // Create chunk processing Lambda
+    this.getSessionFunction = new NodejsFunction(this, "GetSessionFunction", {
+      runtime: Runtime.NODEJS_20_X,
+      handler: "handler",
+      entry: path.join(__dirname, "../lambda/getSession.handler.ts"),
+      bundling: {
+        minify: true,
+        sourceMap: true,
+        target: "es2020",
+        externalModules: ["aws-sdk"],
+        forceDockerBundling: false,
+      },
+      environment: {
+        ALLOWED_ORIGINS:
+          process.env.ALLOWED_ORIGINS ?? "http://localhost:5173/",
+        SESSION_TABLE_NAME: props.sessionTable.tableName,
+      },
+    });
+
     // Add SQS trigger to chunk processing Lambda
     this.processChunkFunction.addEventSource(
       new lambdaEventSources.SqsEventSource(props.documentProcessingQueue, {
@@ -153,6 +173,7 @@ export class LambdaStack extends Stack {
 
     // Grant DynamoDB permissions
     props.sessionTable.grantReadWriteData(this.askDocumentFunction);
+    props.sessionTable.grantReadWriteData(this.getSessionFunction);
 
     // Grant SQS permissions
     props.documentProcessingQueue.grantSendMessages(
