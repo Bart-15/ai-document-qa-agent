@@ -6,6 +6,7 @@ import * as path from "path";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import * as cdk from "aws-cdk-lib";
 import * as sqs from "aws-cdk-lib/aws-sqs";
+import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as lambdaEventSources from "aws-cdk-lib/aws-lambda-event-sources";
 import { getSanitizedConfig } from "../config/environment";
 
@@ -20,6 +21,7 @@ const config = getSanitizedConfig([
 interface LambdaStackProps extends StackProps {
   bucket: s3.IBucket;
   documentProcessingQueue: sqs.IQueue;
+  sessionTable: dynamodb.ITable;
 }
 
 export class LambdaStack extends Stack {

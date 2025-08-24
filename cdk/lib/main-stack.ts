@@ -4,6 +4,7 @@ import { S3Stack } from "./s3-stack";
 import { LambdaStack } from "./lambda-stack";
 import { ApiGatewayStack } from "./api-gw-stack";
 import { SQSStack } from "./sqs-stack";
+import { DynamoDBStack } from "./dynamodb-stack";
 
 export class MainStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -15,10 +16,14 @@ export class MainStack extends cdk.Stack {
     // Create SQS queues for document processing
     const sqsStack = new SQSStack(this, "SQSStack");
 
+    // Create DynamoDb tables
+    const dynamoDBStack = new DynamoDBStack(this, "DynamoDBStack");
+
     // Create Lambda functions
     const lambdaStack = new LambdaStack(this, "LambdaStack", {
       bucket: s3Stack.bucket,
       documentProcessingQueue: sqsStack.documentProcessingQueue,
+      sessionTable: dynamoDBStack.sessionTable,
     });
 
     // Create API Gateway
