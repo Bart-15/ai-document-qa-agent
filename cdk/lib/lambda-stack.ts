@@ -7,7 +7,15 @@ import * as s3 from "aws-cdk-lib/aws-s3";
 import * as cdk from "aws-cdk-lib";
 import * as sqs from "aws-cdk-lib/aws-sqs";
 import * as lambdaEventSources from "aws-cdk-lib/aws-lambda-event-sources";
-import "dotenv/config";
+import { getSanitizedConfig } from "../config/environment";
+
+const config = getSanitizedConfig([
+  "PINECONE_API_KEY",
+  "PINECONE_ENVIRONMENT",
+  "PINECONE_INDEX",
+  "OPENAI_API_KEY",
+  "DOCUMENT_PROCESSING_QUEUE_URL",
+]);
 
 interface LambdaStackProps extends StackProps {
   bucket: s3.IBucket;
@@ -61,10 +69,10 @@ export class LambdaStack extends Stack {
       environment: {
         ALLOWED_ORIGINS:
           process.env.ALLOWED_ORIGINS ?? "http://localhost:5173/",
-        PINECONE_API_KEY: process.env.PINECONE_API_KEY!,
-        OPENAI_API_KEY: process.env.OPENAI_API_KEY!,
-        PINECONE_INDEX: process.env.PINECONE_INDEX!,
-        PINECONE_ENVIRONMENT: process.env.PINECONE_ENVIRONMENT!,
+        PINECONE_API_KEY: config.PINECONE_API_KEY!,
+        OPENAI_API_KEY: config.OPENAI_API_KEY!,
+        PINECONE_INDEX: config.PINECONE_INDEX!,
+        PINECONE_ENVIRONMENT: config.PINECONE_ENVIRONMENT!,
       },
       timeout: cdk.Duration.seconds(30),
       memorySize: 1024,
@@ -90,10 +98,10 @@ export class LambdaStack extends Stack {
           ALLOWED_ORIGINS:
             process.env.ALLOWED_ORIGINS ?? "http://localhost:5173/",
           BUCKET_NAME: props.bucket.bucketName,
-          PINECONE_API_KEY: process.env.PINECONE_API_KEY!,
-          PINECONE_ENVIRONMENT: process.env.PINECONE_ENVIRONMENT!,
-          PINECONE_INDEX: process.env.PINECONE_INDEX!,
-          OPENAI_API_KEY: process.env.OPENAI_API_KEY!,
+          PINECONE_API_KEY: config.PINECONE_API_KEY!,
+          PINECONE_ENVIRONMENT: config.PINECONE_ENVIRONMENT!,
+          PINECONE_INDEX: config.PINECONE_INDEX!,
+          OPENAI_API_KEY: config.OPENAI_API_KEY!,
           DOCUMENT_PROCESSING_QUEUE_URL: props.documentProcessingQueue.queueUrl,
         },
       }
@@ -119,10 +127,10 @@ export class LambdaStack extends Stack {
         environment: {
           ALLOWED_ORIGINS:
             process.env.ALLOWED_ORIGINS ?? "http://localhost:5173/",
-          PINECONE_API_KEY: process.env.PINECONE_API_KEY!,
-          PINECONE_ENVIRONMENT: process.env.PINECONE_ENVIRONMENT!,
-          PINECONE_INDEX: process.env.PINECONE_INDEX!,
-          OPENAI_API_KEY: process.env.OPENAI_API_KEY!,
+          PINECONE_API_KEY: config.PINECONE_API_KEY!,
+          PINECONE_ENVIRONMENT: config.PINECONE_ENVIRONMENT!,
+          PINECONE_INDEX: config.PINECONE_INDEX!,
+          OPENAI_API_KEY: config.OPENAI_API_KEY!,
         },
       }
     );
