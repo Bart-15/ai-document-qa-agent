@@ -7,6 +7,9 @@ import {
   askDocumentSchema,
 } from "./validation/askDocument.validation";
 import validateResource from "../middleware/validateResource";
+import { getSanitizedConfig } from "../config/environment";
+
+const config = getSanitizedConfig(["PINECONE_INDEX"]);
 
 const openaiService = new OpenAIService();
 const pineconeService = new PineconeService();
@@ -19,7 +22,7 @@ export const handler = async (event: APIGatewayProxyEventV2) => {
 
     const { question, documentKey } = body;
 
-    const pinceConeIndex = process.env.PINECONE_INDEX!;
+    const pinceConeIndex = config.PINECONE_INDEX!;
 
     // Get embeddings
     const vector = await openaiService.generateEmbeddings(question);

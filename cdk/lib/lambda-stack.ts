@@ -64,6 +64,7 @@ export class LambdaStack extends Stack {
         PINECONE_API_KEY: process.env.PINECONE_API_KEY!,
         OPENAI_API_KEY: process.env.OPENAI_API_KEY!,
         PINECONE_INDEX: process.env.PINECONE_INDEX!,
+        PINECONE_ENVIRONMENT: process.env.PINECONE_ENVIRONMENT!,
       },
       timeout: cdk.Duration.seconds(30),
       memorySize: 1024,
