@@ -24,7 +24,9 @@
     "typescript": "~5.6.3"
   },
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.873.0",
     "@aws-sdk/client-sqs": "^3.873.0",
+    "@aws-sdk/lib-dynamodb": "^3.873.0",
     "@langchain/community": "^0.3.51",
     "@langchain/core": "^0.3.71",
     "@langchain/openai": "^0.6.7",

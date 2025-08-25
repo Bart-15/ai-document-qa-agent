@@ -7,6 +7,7 @@ export interface ApiGatewayStackProps extends cdk.StackProps {
   getPresignedUrlFunction: lambda.IFunction;
   askDocumentFunction: lambda.IFunction;
   processDocumentFunction: lambda.IFunction;
+  getSessionFunction: lambda.IFunction;
 }
 
 export class ApiGatewayStack extends cdk.Stack {
@@ -39,6 +40,26 @@ export class ApiGatewayStack extends cdk.Stack {
     processDocumentResource.addMethod(
       "POST",
       new apigateway.LambdaIntegration(props.processDocumentFunction)
+    );
+
+    // Session retrieval endpoint
+    const sessionResource = api.root.addResource("session");
+    sessionResource.addMethod(
+      "GET",
+      new apigateway.LambdaIntegration(props.getSessionFunction, {
+        requestTemplates: {
+          "application/json": JSON.stringify({
+            userId: "$input.params('userId')",
+            sessionId: "$input.params('sessionId')",
+          }),
+        },
+      }),
+      {
+        requestParameters: {
+          "method.request.querystring.userId": true,
+          "method.request.querystring.sessionId": true,
+        },
+      }
     );
 
     new cdk.CfnOutput(this, "ApiUrl", {

@@ -6,6 +6,7 @@ import * as path from "path";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import * as cdk from "aws-cdk-lib";
 import * as sqs from "aws-cdk-lib/aws-sqs";
+import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as lambdaEventSources from "aws-cdk-lib/aws-lambda-event-sources";
 import { getSanitizedConfig } from "../config/environment";
 
@@ -20,6 +21,7 @@ const config = getSanitizedConfig([
 interface LambdaStackProps extends StackProps {
   bucket: s3.IBucket;
   documentProcessingQueue: sqs.IQueue;
+  sessionTable: dynamodb.ITable;
 }
 
 export class LambdaStack extends Stack {
@@ -28,6 +30,7 @@ export class LambdaStack extends Stack {
   public readonly processDocumentFunction: NodejsFunction;
   public readonly processChunkFunction: NodejsFunction;
   public readonly streamAskDocumentFunction: NodejsFunction;
+  public readonly getSessionFunction: NodejsFunction;
 
   constructor(scope: Construct, id: string, props: LambdaStackProps) {
     super(scope, id, props);
@@ -73,6 +76,7 @@ export class LambdaStack extends Stack {
         OPENAI_API_KEY: config.OPENAI_API_KEY!,
         PINECONE_INDEX: config.PINECONE_INDEX!,
         PINECONE_ENVIRONMENT: config.PINECONE_ENVIRONMENT!,
+        SESSION_TABLE_NAME: props.sessionTable.tableName,
       },
       timeout: cdk.Duration.seconds(30),
       memorySize: 1024,
@@ -135,6 +139,25 @@ export class LambdaStack extends Stack {
       }
     );
 
+    // Create chunk processing Lambda
+    this.getSessionFunction = new NodejsFunction(this, "GetSessionFunction", {
+      runtime: Runtime.NODEJS_20_X,
+      handler: "handler",
+      entry: path.join(__dirname, "../lambda/getSession.handler.ts"),
+      bundling: {
+        minify: true,
+        sourceMap: true,
+        target: "es2020",
+        externalModules: ["aws-sdk"],
+        forceDockerBundling: false,
+      },
+      environment: {
+        ALLOWED_ORIGINS:
+          process.env.ALLOWED_ORIGINS ?? "http://localhost:5173/",
+        SESSION_TABLE_NAME: props.sessionTable.tableName,
+      },
+    });
+
     // Add SQS trigger to chunk processing Lambda
     this.processChunkFunction.addEventSource(
       new lambdaEventSources.SqsEventSource(props.documentProcessingQueue, {
@@ -147,6 +170,10 @@ export class LambdaStack extends Stack {
       props.bucket.grantRead(this.processChunkFunction);
       props.bucket.grantReadWrite(this.getPresignedUrlFunction);
     }
+
+    // Grant DynamoDB permissions
+    props.sessionTable.grantReadWriteData(this.askDocumentFunction);
+    props.sessionTable.grantReadWriteData(this.getSessionFunction);
 
     // Grant SQS permissions
     props.documentProcessingQueue.grantSendMessages(
