@@ -1,6 +1,7 @@
+import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import { OpenAIEmbeddings } from "@langchain/openai";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
-import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
+
 import { getSanitizedConfig } from "../../config/environment";
 
 const config = getSanitizedConfig(["OPENAI_API_KEY"]);

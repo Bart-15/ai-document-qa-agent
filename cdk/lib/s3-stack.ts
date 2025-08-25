@@ -1,6 +1,6 @@
 import * as cdk from "aws-cdk-lib";
-import { Construct } from "constructs";
 import * as s3 from "aws-cdk-lib/aws-s3";
+import { Construct } from "constructs";
 
 export class S3Stack extends cdk.Stack {
   public readonly bucket: s3.Bucket;
@@ -10,7 +10,7 @@ export class S3Stack extends cdk.Stack {
 
     this.bucket = new s3.Bucket(this, "AIDocumentQaBucket", {
       bucketName: `${cdk.Stack.of(
-        this
+        this,
       ).stackName.toLowerCase()}-ai-document-qa-bucket`,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,

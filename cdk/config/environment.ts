@@ -20,7 +20,7 @@ export const getEnvironmentConfig = (): EnvironmentConfig => {
   allowedOrigins.forEach((origin) => {
     if (!origin.startsWith("http://") && !origin.startsWith("https://")) {
       throw new Error(
-        `Invalid origin: ${origin}. Origins must start with http:// or https://`
+        `Invalid origin: ${origin}. Origins must start with http:// or https://`,
       );
     }
   });
@@ -39,14 +39,6 @@ interface ENV {
   DOCUMENT_PROCESSING_QUEUE_URL: string | undefined;
 }
 
-interface Config {
-  PINECONE_API_KEY: string;
-  PINECONE_ENVIRONMENT: string;
-  PINECONE_INDEX: string;
-  OPENAI_API_KEY: string;
-  DOCUMENT_PROCESSING_QUEUE_URL: string;
-}
-
 export const getConfig = (): ENV => {
   return {
     PINECONE_API_KEY: process.env.PINECONE_API_KEY,
@@ -59,7 +51,7 @@ export const getConfig = (): ENV => {
 
 // ✅ validate only what you pass in
 export const getSanitizedConfig = <K extends keyof ENV>(
-  requiredKeys: K[]
+  requiredKeys: K[],
 ): Pick<Required<ENV>, K> & ENV => {
   const config = getConfig();
 

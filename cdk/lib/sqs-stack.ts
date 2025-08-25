@@ -1,7 +1,7 @@
 import { Stack, StackProps } from "aws-cdk-lib";
-import { Construct } from "constructs";
-import * as sqs from "aws-cdk-lib/aws-sqs";
 import * as cdk from "aws-cdk-lib";
+import * as sqs from "aws-cdk-lib/aws-sqs";
+import { Construct } from "constructs";
 
 export class SQSStack extends Stack {
   public readonly documentProcessingQueue: sqs.Queue;
@@ -27,7 +27,7 @@ export class SQSStack extends Stack {
           queue: this.documentProcessingDLQ,
           maxReceiveCount: 3,
         },
-      }
+      },
     );
   }
 }

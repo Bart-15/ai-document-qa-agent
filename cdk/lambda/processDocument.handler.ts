@@ -1,17 +1,17 @@
+import { SendMessageBatchCommand, SQSClient } from "@aws-sdk/client-sqs";
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
 import fs from "fs";
 import path from "path";
-import { SQSClient, SendMessageBatchCommand } from "@aws-sdk/client-sqs";
 
+import { getSanitizedConfig } from "../config/environment";
+import { createResponse, handleError } from "../middleware/errorHandler";
+import validateResource from "../middleware/validateResource";
 import { DocumentProcessingService } from "./services/document-processing.service";
 import { S3Service } from "./services/s3.service";
-import { createResponse, handleError } from "../middleware/errorHandler";
 import {
   ProcessDocumentInput,
   processDocumentSchema,
 } from "./validation/processDocument.validation";
-import validateResource from "../middleware/validateResource";
-import { getSanitizedConfig } from "../config/environment";
 
 const config = getSanitizedConfig(["DOCUMENT_PROCESSING_QUEUE_URL"]);
 
@@ -23,7 +23,7 @@ const sqsClient = new SQSClient({});
 const BATCH_SIZE = 10; // Number of messages to send in each batch
 
 export const handler = async (
-  event: APIGatewayProxyEventV2
+  event: APIGatewayProxyEventV2,
 ): Promise<APIGatewayProxyResultV2> => {
   let tmpFilePath: string | undefined;
 
@@ -85,8 +85,8 @@ export const handler = async (
 
       console.log(
         `Sent batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(
-          chunks.length / BATCH_SIZE
-        )}`
+          chunks.length / BATCH_SIZE,
+        )}`,
       );
     }
 

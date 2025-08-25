@@ -1,7 +1,8 @@
 import { SQSEvent, SQSHandler } from "aws-lambda";
-import { PineconeService } from "./services/pinecone.service";
-import { DocumentProcessingService } from "./services/document-processing.service";
+
 import { getSanitizedConfig } from "../config/environment";
+import { DocumentProcessingService } from "./services/document-processing.service";
+import { PineconeService } from "./services/pinecone.service";
 
 const config = getSanitizedConfig(["PINECONE_INDEX"]);
 
@@ -42,7 +43,7 @@ export const handler: SQSHandler = async (event: SQSEvent) => {
       console.log(
         `Successfully processed chunk ${message.chunkIndex + 1}/${
           message.totalChunks
-        } for document ${message.documentKey}`
+        } for document ${message.documentKey}`,
       );
     }
   } catch (error) {

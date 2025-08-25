@@ -1,14 +1,15 @@
 import type { APIGatewayProxyEventV2 } from "aws-lambda";
+
+import { getSanitizedConfig } from "../config/environment";
+import { createResponse, handleError } from "../middleware/errorHandler";
+import validateResource from "../middleware/validateResource";
+import { DynamoDBService } from "./services/dynamodb.service";
 import { OpenAIService } from "./services/openai.service";
 import { PineconeService } from "./services/pinecone.service";
-import { DynamoDBService } from "./services/dynamodb.service";
-import { createResponse, handleError } from "../middleware/errorHandler";
 import {
   AskDocumentInput,
   askDocumentSchema,
 } from "./validation/askDocument.validation";
-import validateResource from "../middleware/validateResource";
-import { getSanitizedConfig } from "../config/environment";
 
 const config = getSanitizedConfig(["PINECONE_INDEX"]);
 
@@ -31,7 +32,7 @@ export const handler = async (event: APIGatewayProxyEventV2) => {
       pinceConeIndex,
       vector,
       5,
-      documentKey
+      documentKey,
     );
     const context = pineconeService.getContext(queryRes.matches ?? []);
     const answer = await openaiService.getCompletion(context ?? "", question);
