@@ -1,16 +1,17 @@
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
+
+import { createResponse, handleError } from "../middleware/errorHandler";
+import validateResource from "../middleware/validateResource";
 import { DynamoDBService } from "./services/dynamodb.service";
 import {
   GetSessionInput,
   getSessionSchema,
 } from "./validation/getSession.validation";
-import validateResource from "../middleware/validateResource";
-import { createResponse, handleError } from "../middleware/errorHandler";
 
 const dynamoDBService = new DynamoDBService();
 
 export const handler = async (
-  event: APIGatewayProxyEventV2
+  event: APIGatewayProxyEventV2,
 ): Promise<APIGatewayProxyResultV2> => {
   try {
     if (!event.queryStringParameters) {
@@ -30,7 +31,7 @@ export const handler = async (
     // Get session from DynamoDB
     const session = await dynamoDBService.getSession(
       input.userId,
-      input.sessionId
+      input.sessionId,
     );
 
     if (!session) {

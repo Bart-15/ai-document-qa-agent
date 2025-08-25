@@ -1,10 +1,10 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   DynamoDBDocumentClient,
-  PutCommand,
   GetCommand,
-  UpdateCommand,
+  PutCommand,
   QueryCommand,
+  UpdateCommand,
 } from "@aws-sdk/lib-dynamodb";
 import { v4 as uuidv4 } from "uuid";
 
@@ -41,7 +41,7 @@ export class DynamoDBService {
   async createSession(
     userId: string,
     documentKey: string,
-    initialMessages?: Array<{ role: "user" | "assistant"; content: string }>
+    initialMessages?: Array<{ role: "user" | "assistant"; content: string }>,
   ): Promise<UserSession> {
     const now = Date.now();
     const sessionData = {
@@ -62,7 +62,7 @@ export class DynamoDBService {
           ...sessionData,
           ttl: sessionData.expiryTime, // DynamoDB expects the attribute to be named 'ttl'
         },
-      })
+      }),
     );
 
     return {
@@ -73,7 +73,7 @@ export class DynamoDBService {
 
   async getSession(
     userId: string,
-    sessionId: string
+    sessionId: string,
   ): Promise<UserSession | null> {
     const result = await this.dynamoDB.send(
       new GetCommand({
@@ -82,7 +82,7 @@ export class DynamoDBService {
           userId,
           sessionId,
         },
-      })
+      }),
     );
 
     return (result.Item as UserSession) || null;
@@ -91,7 +91,7 @@ export class DynamoDBService {
   async addMessageToSession(
     userId: string,
     sessionId: string,
-    message: Omit<ChatMessage, "timestamp">
+    message: Omit<ChatMessage, "timestamp">,
   ): Promise<void> {
     const now = Date.now();
     await this.dynamoDB.send(
@@ -112,7 +112,7 @@ export class DynamoDBService {
           ":now": now,
           ":ttl": this.calculateTTL(),
         },
-      })
+      }),
     );
   }
 
@@ -126,7 +126,7 @@ export class DynamoDBService {
         },
         ScanIndexForward: false, // Get most recent first
         Limit: 1,
-      })
+      }),
     );
 
     return (result.Items?.[0] as UserSession) || null;

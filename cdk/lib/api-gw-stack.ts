@@ -1,7 +1,7 @@
 import * as cdk from "aws-cdk-lib";
-import { Construct } from "constructs";
 import * as apigateway from "aws-cdk-lib/aws-apigateway";
 import * as lambda from "aws-cdk-lib/aws-lambda";
+import { Construct } from "constructs";
 
 export interface ApiGatewayStackProps extends cdk.StackProps {
   getPresignedUrlFunction: lambda.IFunction;
@@ -26,20 +26,20 @@ export class ApiGatewayStack extends cdk.Stack {
       "POST",
       new apigateway.LambdaIntegration(props.getPresignedUrlFunction, {
         proxy: true,
-      })
+      }),
     );
 
     // Ask endpoint
     const askResource = api.root.addResource("ask");
     askResource.addMethod(
       "POST",
-      new apigateway.LambdaIntegration(props.askDocumentFunction)
+      new apigateway.LambdaIntegration(props.askDocumentFunction),
     );
 
     const processDocumentResource = api.root.addResource("process-document");
     processDocumentResource.addMethod(
       "POST",
-      new apigateway.LambdaIntegration(props.processDocumentFunction)
+      new apigateway.LambdaIntegration(props.processDocumentFunction),
     );
 
     // Session retrieval endpoint
@@ -59,7 +59,7 @@ export class ApiGatewayStack extends cdk.Stack {
           "method.request.querystring.userId": true,
           "method.request.querystring.sessionId": true,
         },
-      }
+      },
     );
 
     new cdk.CfnOutput(this, "ApiUrl", {

@@ -1,5 +1,6 @@
+import { APIGatewayProxyEventV2, APIGatewayProxyResult } from "aws-lambda";
 import { ZodError } from "zod";
-import { APIGatewayProxyResult, APIGatewayProxyEventV2 } from "aws-lambda";
+
 import { getEnvironmentConfig } from "../config/environment";
 
 const headers = {
@@ -26,7 +27,7 @@ const validateOrigin = (requestOrigin: string | undefined): string => {
 export function createResponse<T>(
   statusCode: number,
   body: Partial<T>,
-  event?: APIGatewayProxyEventV2
+  event?: APIGatewayProxyEventV2,
 ): APIGatewayProxyResult {
   const origin = event?.headers?.["origin"] || event?.headers?.["Origin"];
   const allowedOrigin = validateOrigin(origin);
@@ -58,7 +59,7 @@ export function handleError(error: unknown, event?: APIGatewayProxyEventV2) {
       {
         error: `Invalid request body format : "${error.message}"`,
       },
-      event
+      event,
     );
   }
 

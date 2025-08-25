@@ -1,4 +1,5 @@
 import { OpenAI } from "openai";
+
 import { getSanitizedConfig } from "../../config/environment";
 
 const config = getSanitizedConfig(["OPENAI_API_KEY"]);

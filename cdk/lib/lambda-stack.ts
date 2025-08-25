@@ -1,13 +1,14 @@
 import { Stack, StackProps } from "aws-cdk-lib";
-import { Construct } from "constructs";
-import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
-import { Runtime } from "aws-cdk-lib/aws-lambda";
-import * as path from "path";
-import * as s3 from "aws-cdk-lib/aws-s3";
 import * as cdk from "aws-cdk-lib";
-import * as sqs from "aws-cdk-lib/aws-sqs";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
+import { Runtime } from "aws-cdk-lib/aws-lambda";
 import * as lambdaEventSources from "aws-cdk-lib/aws-lambda-event-sources";
+import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
+import * as s3 from "aws-cdk-lib/aws-s3";
+import * as sqs from "aws-cdk-lib/aws-sqs";
+import { Construct } from "constructs";
+import * as path from "path";
+
 import { getSanitizedConfig } from "../config/environment";
 
 const config = getSanitizedConfig([
@@ -55,7 +56,7 @@ export class LambdaStack extends Stack {
           ALLOWED_ORIGINS:
             process.env.ALLOWED_ORIGINS ?? "http://localhost:5173/",
         },
-      }
+      },
     );
 
     this.askDocumentFunction = new NodejsFunction(this, "AskDocumentFunction", {
@@ -108,7 +109,7 @@ export class LambdaStack extends Stack {
           OPENAI_API_KEY: config.OPENAI_API_KEY!,
           DOCUMENT_PROCESSING_QUEUE_URL: props.documentProcessingQueue.queueUrl,
         },
-      }
+      },
     );
 
     // Create chunk processing Lambda
@@ -136,7 +137,7 @@ export class LambdaStack extends Stack {
           PINECONE_INDEX: config.PINECONE_INDEX!,
           OPENAI_API_KEY: config.OPENAI_API_KEY!,
         },
-      }
+      },
     );
 
     // Create chunk processing Lambda
@@ -162,7 +163,7 @@ export class LambdaStack extends Stack {
     this.processChunkFunction.addEventSource(
       new lambdaEventSources.SqsEventSource(props.documentProcessingQueue, {
         batchSize: 10,
-      })
+      }),
     );
 
     if (props.bucket) {
@@ -177,10 +178,10 @@ export class LambdaStack extends Stack {
 
     // Grant SQS permissions
     props.documentProcessingQueue.grantSendMessages(
-      this.processDocumentFunction
+      this.processDocumentFunction,
     );
     props.documentProcessingQueue.grantConsumeMessages(
-      this.processChunkFunction
+      this.processChunkFunction,
     );
   }
 }

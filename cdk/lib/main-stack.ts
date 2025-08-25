@@ -1,10 +1,11 @@
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
-import { S3Stack } from "./s3-stack";
-import { LambdaStack } from "./lambda-stack";
+
 import { ApiGatewayStack } from "./api-gw-stack";
-import { SQSStack } from "./sqs-stack";
 import { DynamoDBStack } from "./dynamodb-stack";
+import { LambdaStack } from "./lambda-stack";
+import { S3Stack } from "./s3-stack";
+import { SQSStack } from "./sqs-stack";
 
 export class MainStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {

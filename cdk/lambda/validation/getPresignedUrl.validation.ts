@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import { allowedTypes } from "../utils/const";
 
 export const getPresignedUrlSchema = z.object({
@@ -8,7 +9,7 @@ export const getPresignedUrlSchema = z.object({
     .min(1, "Content type is required")
     .refine(
       (value) => Object.keys(allowedTypes).includes(value),
-      "Invalid content type. Only PDF and DOCX files are supported."
+      "Invalid content type. Only PDF and DOCX files are supported.",
     ),
 });
 

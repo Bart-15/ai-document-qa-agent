@@ -1,18 +1,20 @@
 import "dotenv/config";
+
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
-import { S3Service } from "./services/s3.service";
+
 import { createResponse, handleError } from "../middleware/errorHandler";
+import validateResource from "../middleware/validateResource";
+import { S3Service } from "./services/s3.service";
 import { allowedTypes } from "./utils/const";
 import {
   GetPresignedUrlInput,
   getPresignedUrlSchema,
 } from "./validation/getPresignedUrl.validation";
-import validateResource from "../middleware/validateResource";
 
 const s3Service = new S3Service();
 
 export const handler = async (
-  event: APIGatewayProxyEventV2
+  event: APIGatewayProxyEventV2,
 ): Promise<APIGatewayProxyResultV2> => {
   try {
     // Parse request body
@@ -27,7 +29,7 @@ export const handler = async (
     const url = await s3Service.getPresignedUrl(
       process.env.BUCKET_NAME!,
       fileName,
-      contentType
+      contentType,
     );
 
     return createResponse(200, {
