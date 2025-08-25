@@ -11,7 +11,8 @@
     "cdk": "cdk",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
-    "format": "prettier --write '**/*.{ts,js,json}'"
+    "format": "prettier --write '**/*.{ts,js,json}'",
+    "test:coverage": "jest --coverage"
   },
   "devDependencies": {
     "@aws-sdk/client-s3": "^3.864.0",
