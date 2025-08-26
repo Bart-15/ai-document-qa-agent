@@ -1,5 +1,6 @@
 import { App } from "aws-cdk-lib";
 import { Template } from "aws-cdk-lib/assertions";
+import { Match } from "aws-cdk-lib/assertions";
 
 import { S3Stack } from "../lib/s3-stack";
 
@@ -30,10 +31,10 @@ describe("S3Stack", () => {
       },
       LifecycleConfiguration: {
         Rules: [
-          {
-            Enabled: true,
+          Match.objectLike({
+            Status: "Enabled",
             ExpirationInDays: 1,
-          },
+          }),
         ],
       },
     });
