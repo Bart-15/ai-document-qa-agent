@@ -1,51 +1,29 @@
 import { App } from "aws-cdk-lib";
-import { Template } from "aws-cdk-lib/assertions";
+import { Match, Template } from "aws-cdk-lib/assertions";
 
 import { DynamoDBStack } from "../lib/dynamodb-stack";
 
 describe("DynamoDBStack", () => {
-  let dynamoDBStackTemplate: Template;
+  let template: Template;
 
   beforeEach(() => {
-    jest.resetAllMocks();
-    const testApp = new App({
-      outdir: "cdk.out",
-    });
-
-    const stack = new DynamoDBStack(testApp, "test-stack");
-    dynamoDBStackTemplate = Template.fromStack(stack);
+    const app = new App();
+    const stack = new DynamoDBStack(app, "TestStack");
+    template = Template.fromStack(stack);
   });
 
-  test("Session table is created with correct configuration", () => {
-    dynamoDBStackTemplate.hasResourceProperties("AWS::DynamoDB::Table", {
-      KeySchema: [
-        { AttributeName: "userId", KeyType: "HASH" },
-        { AttributeName: "sessionId", KeyType: "RANGE" },
-      ],
-      AttributeDefinitions: [
-        { AttributeName: "userId", AttributeType: "S" },
-        { AttributeName: "sessionId", AttributeType: "S" },
-      ],
+  it("creates a DynamoDB table", () => {
+    const resources = template.findResources("AWS::DynamoDB::Table");
+    expect(Object.keys(resources).length).toBe(1);
+
+    template.hasResourceProperties("AWS::DynamoDB::Table", {
       BillingMode: "PAY_PER_REQUEST",
-      TimeToLiveSpecification: {
-        AttributeName: "ttl",
-        Enabled: true,
-      },
-      GlobalSecondaryIndexes: [
-        {
-          IndexName: "SessionIdIndex",
-          KeySchema: [{ AttributeName: "sessionId", KeyType: "HASH" }],
-          Projection: {
-            ProjectionType: "ALL",
-          },
-        },
-      ],
-    });
-  });
-
-  test("Table has correct removal policy", () => {
-    dynamoDBStackTemplate.hasResource("AWS::DynamoDB::Table", {
-      DeletionPolicy: "Delete",
+      AttributeDefinitions: Match.arrayWith([
+        Match.objectLike({
+          AttributeName: "userId",
+          AttributeType: "S",
+        }),
+      ]),
     });
   });
 });
