@@ -26,8 +26,11 @@ export class S3Service {
   }
 
   generateFileName(originalFileName: string, extension: string): string {
-    // Sanitize the original filename by removing special characters and spaces
-    const sanitizedName = originalFileName
+    // Remove the extension from originalFileName if it exists
+    const nameWithoutExtension = originalFileName.replace(/\.[^/.]+$/, "");
+
+    // Sanitize the filename by removing special characters and spaces
+    const sanitizedName = nameWithoutExtension
       .replace(/[^a-zA-Z0-9]/g, "-") // Replace special chars with hyphen
       .toLowerCase()
       .replace(/-+/g, "-") // Replace multiple consecutive hyphens with single hyphen
