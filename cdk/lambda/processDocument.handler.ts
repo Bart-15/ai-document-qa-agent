@@ -1,23 +1,25 @@
 import { SendMessageBatchCommand, SQSClient } from "@aws-sdk/client-sqs";
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
+import * as dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
 
-import { getSanitizedConfig } from "../config/environment";
 import { createResponse, handleError } from "../middleware/errorHandler";
 import validateResource from "../middleware/validateResource";
 import { DocumentProcessingService } from "./services/document-processing.service";
 import { S3Service } from "./services/s3.service";
+import { SSMParameterService } from "./services/ssm-parameter.service";
 import {
   ProcessDocumentInput,
   processDocumentSchema,
 } from "./validation/processDocument.validation";
 
-const config = getSanitizedConfig(["DOCUMENT_PROCESSING_QUEUE_URL"]);
+dotenv.config();
 
 // Initialize services
+const ssmService = new SSMParameterService();
 const s3Service = new S3Service();
-const documentService = new DocumentProcessingService();
+const documentService = new DocumentProcessingService(ssmService);
 const sqsClient = new SQSClient({});
 
 const BATCH_SIZE = 10; // Number of messages to send in each batch
@@ -60,7 +62,7 @@ export const handler = async (
     const { chunks } = await documentService.processDocument(tmpFilePath);
 
     // Send chunks to SQS in batches
-    const queueUrl = config.DOCUMENT_PROCESSING_QUEUE_URL;
+    const queueUrl = process.env.DOCUMENT_PROCESSING_QUEUE_URL;
 
     let processedChunks = 0;
     for (let i = 0; i < chunks.length; i += BATCH_SIZE) {

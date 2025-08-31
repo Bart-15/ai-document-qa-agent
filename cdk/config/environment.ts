@@ -32,20 +32,12 @@ export const getEnvironmentConfig = (): EnvironmentConfig => {
 
 // env variable config
 interface ENV {
-  PINECONE_API_KEY: string | undefined;
-  PINECONE_ENVIRONMENT: string | undefined;
   PINECONE_INDEX: string | undefined;
-  OPENAI_API_KEY: string | undefined;
-  DOCUMENT_PROCESSING_QUEUE_URL: string | undefined;
 }
 
 export const getConfig = (): ENV => {
   return {
-    PINECONE_API_KEY: process.env.PINECONE_API_KEY,
-    PINECONE_ENVIRONMENT: process.env.PINECONE_ENVIRONMENT,
     PINECONE_INDEX: process.env.PINECONE_INDEX,
-    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
-    DOCUMENT_PROCESSING_QUEUE_URL: process.env.DOCUMENT_PROCESSING_QUEUE_URL,
   };
 };
 

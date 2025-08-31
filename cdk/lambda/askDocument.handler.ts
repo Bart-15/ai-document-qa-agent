@@ -6,6 +6,7 @@ import validateResource from "../middleware/validateResource";
 import { DynamoDBService } from "./services/dynamodb.service";
 import { OpenAIService } from "./services/openai.service";
 import { PineconeService } from "./services/pinecone.service";
+import { SSMParameterService } from "./services/ssm-parameter.service";
 import {
   AskDocumentInput,
   askDocumentSchema,
@@ -13,12 +14,17 @@ import {
 
 const config = getSanitizedConfig(["PINECONE_INDEX"]);
 
-const openaiService = new OpenAIService();
-const pineconeService = new PineconeService();
+const ssmService = new SSMParameterService();
+const openaiService = new OpenAIService(ssmService);
+const pineconeService = new PineconeService(ssmService);
 const dynamoDBService = new DynamoDBService();
 
 export const handler = async (event: APIGatewayProxyEventV2) => {
   try {
+    // Initialize services to get api key from ssm
+    await openaiService.init();
+    await pineconeService.init();
+
     const body: AskDocumentInput = event.body ? JSON.parse(event.body) : {};
 
     validateResource(askDocumentSchema, body);

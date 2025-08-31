@@ -1,6 +1,7 @@
 import { Stack, StackProps } from "aws-cdk-lib";
 import * as cdk from "aws-cdk-lib";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
+import * as iam from "aws-cdk-lib/aws-iam";
 import { Runtime } from "aws-cdk-lib/aws-lambda";
 import * as lambdaEventSources from "aws-cdk-lib/aws-lambda-event-sources";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
@@ -11,13 +12,7 @@ import * as path from "path";
 
 import { getSanitizedConfig } from "../config/environment";
 
-const config = getSanitizedConfig([
-  "PINECONE_API_KEY",
-  "PINECONE_ENVIRONMENT",
-  "PINECONE_INDEX",
-  "OPENAI_API_KEY",
-  "DOCUMENT_PROCESSING_QUEUE_URL",
-]);
+const config = getSanitizedConfig(["PINECONE_INDEX"]);
 
 interface LambdaStackProps extends StackProps {
   bucket: s3.IBucket;
@@ -71,12 +66,8 @@ export class LambdaStack extends Stack {
         forceDockerBundling: false,
       },
       environment: {
-        ALLOWED_ORIGINS:
-          process.env.ALLOWED_ORIGINS ?? "http://localhost:5173/",
-        PINECONE_API_KEY: config.PINECONE_API_KEY!,
-        OPENAI_API_KEY: config.OPENAI_API_KEY!,
+        ALLOWED_ORIGINS: "http://localhost:5173/",
         PINECONE_INDEX: config.PINECONE_INDEX!,
-        PINECONE_ENVIRONMENT: config.PINECONE_ENVIRONMENT!,
         SESSION_TABLE_NAME: props.sessionTable.tableName,
       },
       timeout: cdk.Duration.seconds(30),
@@ -100,13 +91,9 @@ export class LambdaStack extends Stack {
         timeout: cdk.Duration.minutes(5),
         memorySize: 1024,
         environment: {
-          ALLOWED_ORIGINS:
-            process.env.ALLOWED_ORIGINS ?? "http://localhost:5173/",
+          ALLOWED_ORIGINS: "http://localhost:5173/",
           BUCKET_NAME: props.bucket.bucketName,
-          PINECONE_API_KEY: config.PINECONE_API_KEY!,
-          PINECONE_ENVIRONMENT: config.PINECONE_ENVIRONMENT!,
           PINECONE_INDEX: config.PINECONE_INDEX!,
-          OPENAI_API_KEY: config.OPENAI_API_KEY!,
           DOCUMENT_PROCESSING_QUEUE_URL: props.documentProcessingQueue.queueUrl,
         },
       },
@@ -130,12 +117,8 @@ export class LambdaStack extends Stack {
         timeout: cdk.Duration.minutes(5),
         memorySize: 1024,
         environment: {
-          ALLOWED_ORIGINS:
-            process.env.ALLOWED_ORIGINS ?? "http://localhost:5173/",
-          PINECONE_API_KEY: config.PINECONE_API_KEY!,
-          PINECONE_ENVIRONMENT: config.PINECONE_ENVIRONMENT!,
+          ALLOWED_ORIGINS: "http://localhost:5173/",
           PINECONE_INDEX: config.PINECONE_INDEX!,
-          OPENAI_API_KEY: config.OPENAI_API_KEY!,
         },
       },
     );
@@ -153,11 +136,35 @@ export class LambdaStack extends Stack {
         forceDockerBundling: false,
       },
       environment: {
-        ALLOWED_ORIGINS:
-          process.env.ALLOWED_ORIGINS ?? "http://localhost:5173/",
+        ALLOWED_ORIGINS: "http://localhost:5173/",
         SESSION_TABLE_NAME: props.sessionTable.tableName,
       },
     });
+
+    // Grant SSM permissions
+    const ssmPolicy = new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: ["ssm:GetParameter"],
+      resources: [
+        `arn:aws:ssm:${this.region}:${this.account}:parameter/ai-qa-agent/dev/*`,
+      ],
+    });
+    this.askDocumentFunction.addToRolePolicy(ssmPolicy);
+    this.processDocumentFunction.addToRolePolicy(ssmPolicy);
+    this.processChunkFunction.addToRolePolicy(ssmPolicy);
+    this.getSessionFunction.addToRolePolicy(ssmPolicy);
+    this.getPresignedUrlFunction.addToRolePolicy(ssmPolicy);
+
+    const kmsPolicy = new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: ["kms:Decrypt"],
+      resources: ["*"], // or the specific KMS key ARN if using custom
+    });
+    this.askDocumentFunction.addToRolePolicy(kmsPolicy);
+    this.processDocumentFunction.addToRolePolicy(kmsPolicy);
+    this.processChunkFunction.addToRolePolicy(kmsPolicy);
+    this.getSessionFunction.addToRolePolicy(kmsPolicy);
+    this.getPresignedUrlFunction.addToRolePolicy(kmsPolicy);
 
     // Add SQS trigger to chunk processing Lambda
     this.processChunkFunction.addEventSource(

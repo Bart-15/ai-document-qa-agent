@@ -3,12 +3,14 @@ import { SQSEvent, SQSHandler } from "aws-lambda";
 import { getSanitizedConfig } from "../config/environment";
 import { DocumentProcessingService } from "./services/document-processing.service";
 import { PineconeService } from "./services/pinecone.service";
+import { SSMParameterService } from "./services/ssm-parameter.service";
 
 const config = getSanitizedConfig(["PINECONE_INDEX"]);
 
 // Initialize services
-const pineconeService = new PineconeService();
-const documentService = new DocumentProcessingService();
+const ssmService = new SSMParameterService();
+const pineconeService = new PineconeService(ssmService);
+const documentService = new DocumentProcessingService(ssmService);
 
 interface ChunkMessage {
   chunk: string;
@@ -19,6 +21,10 @@ interface ChunkMessage {
 
 export const handler: SQSHandler = async (event: SQSEvent) => {
   try {
+    // Initialize services to get api key from ssm
+    await documentService.init();
+    await pineconeService.init();
+
     for (const record of event.Records) {
       const message: ChunkMessage = JSON.parse(record.body);
 
