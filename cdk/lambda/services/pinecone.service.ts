@@ -4,15 +4,18 @@ import {
   type ScoredPineconeRecord,
 } from "@pinecone-database/pinecone";
 
-import { getSanitizedConfig } from "../../config/environment";
-
-const config = getSanitizedConfig(["PINECONE_ENVIRONMENT"]);
+import { SSMParameterService } from "./ssm-parameter.service";
 
 export class PineconeService {
-  public pc: Pinecone;
+  private pc: Pinecone;
 
-  constructor() {
-    this.pc = new Pinecone({ apiKey: config.PINECONE_API_KEY! });
+  constructor(private ssmService: SSMParameterService) {}
+
+  async init() {
+    const apiKey = await this.ssmService.getParameter(
+      "/ai-qa-agent/dev/PINECONE_API_KEY",
+    );
+    this.pc = new Pinecone({ apiKey });
   }
 
   async upsertVectors(
