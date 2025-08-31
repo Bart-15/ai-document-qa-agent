@@ -2,16 +2,19 @@ import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import { OpenAIEmbeddings } from "@langchain/openai";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 
-import { getSanitizedConfig } from "../../config/environment";
-
-const config = getSanitizedConfig(["OPENAI_API_KEY"]);
+import { SSMParameterService } from "./ssm-parameter.service";
 
 export class DocumentProcessingService {
   private embeddings: OpenAIEmbeddings;
 
-  constructor() {
+  constructor(private ssmService: SSMParameterService) {}
+
+  async init() {
+    const openAIAPIKey = await this.ssmService.getParameter(
+      "/ai-qa-agent/dev/OPENAI_API_KEY",
+    );
     this.embeddings = new OpenAIEmbeddings({
-      openAIApiKey: config.OPENAI_API_KEY,
+      openAIApiKey: openAIAPIKey,
       modelName: "text-embedding-3-small",
     });
   }

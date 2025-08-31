@@ -1,16 +1,17 @@
 import { OpenAI } from "openai";
 
-import { getSanitizedConfig } from "../../config/environment";
-
-const config = getSanitizedConfig(["OPENAI_API_KEY"]);
+import { SSMParameterService } from "./ssm-parameter.service";
 
 export class OpenAIService {
   private openai: OpenAI;
 
-  constructor() {
-    this.openai = new OpenAI({
-      apiKey: config.OPENAI_API_KEY,
-    });
+  constructor(private ssmService: SSMParameterService) {}
+
+  async init() {
+    const apiKey = await this.ssmService.getParameter(
+      "/ai-qa-agent/dev/OPENAI_API_KEY",
+    );
+    this.openai = new OpenAI({ apiKey });
   }
 
   async generateEmbeddings(input: string) {
