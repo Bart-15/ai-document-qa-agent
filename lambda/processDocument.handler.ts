@@ -24,6 +24,11 @@ const sqsClient = new SQSClient({});
 
 const BATCH_SIZE = 10; // Number of messages to send in each batch
 
+/**
+ * Processes a document by downloading from S3, splitting into chunks, and sending to SQS for embedding.
+ * @param {APIGatewayProxyEventV2} event - API Gateway event containing documentKey.
+ * @returns {Promise<APIGatewayProxyResultV2>} API response with processing status or error info.
+ */
 export const handler = async (
   event: APIGatewayProxyEventV2,
 ): Promise<APIGatewayProxyResultV2> => {

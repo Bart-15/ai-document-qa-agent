@@ -4,11 +4,18 @@ import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 
 import { SSMParameterService } from "./ssm-parameter.service";
 
+/**
+ * Service for processing documents (PDF loading, chunking, and embedding).
+ */
 export class DocumentProcessingService {
   private embeddings: OpenAIEmbeddings;
 
   constructor(private ssmService: SSMParameterService) {}
 
+  /**
+   * Initializes the OpenAI embeddings client using API key from SSM.
+   * @returns {Promise<void>}
+   */
   async init() {
     const openAIAPIKey = await this.ssmService.getParameter(
       "/ai-qa-agent/dev/OPENAI_API_KEY",
@@ -19,6 +26,11 @@ export class DocumentProcessingService {
     });
   }
 
+  /**
+   * Generates an embedding vector for the given text.
+   * @param {string} text - The text to embed.
+   * @returns {Promise<number[]>} The embedding vector.
+   */
   async generateEmbedding(text: string): Promise<number[]> {
     const embedding = await this.embeddings.embedQuery(text);
     if (!embedding || embedding.length === 0) {
@@ -27,6 +39,11 @@ export class DocumentProcessingService {
     return embedding;
   }
 
+  /**
+   * Loads a PDF file, splits it into text chunks, and returns the chunks.
+   * @param {string} filePath - Path to the PDF file.
+   * @returns {Promise<{chunks: any[]}>} The extracted text chunks.
+   */
   async processDocument(filePath: string) {
     // Load PDF
     const loader = new PDFLoader(filePath);

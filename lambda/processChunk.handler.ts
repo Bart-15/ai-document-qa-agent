@@ -19,6 +19,11 @@ interface ChunkMessage {
   totalChunks: number;
 }
 
+/**
+ * Processes SQS events containing document chunks, generates embeddings, and stores them in Pinecone.
+ * @param {SQSEvent} event - SQS event with chunk processing messages.
+ * @returns {Promise<void>} Resolves when all chunks are processed or throws on error.
+ */
 export const handler: SQSHandler = async (event: SQSEvent) => {
   try {
     // Initialize services to get api key from ssm

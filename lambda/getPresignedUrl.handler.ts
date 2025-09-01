@@ -13,6 +13,11 @@ import {
 
 const s3Service = new S3Service();
 
+/**
+ * Generates a presigned S3 upload URL for document uploads.
+ * @param {APIGatewayProxyEventV2} event - API Gateway event containing fileName and contentType.
+ * @returns {Promise<APIGatewayProxyResultV2>} API response with URL and file key, or error info.
+ */
 export const handler = async (
   event: APIGatewayProxyEventV2,
 ): Promise<APIGatewayProxyResultV2> => {
