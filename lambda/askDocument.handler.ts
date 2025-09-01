@@ -19,6 +19,11 @@ const openaiService = new OpenAIService(ssmService);
 const pineconeService = new PineconeService(ssmService);
 const dynamoDBService = new DynamoDBService();
 
+/**
+ * Handles question answering for a document chat session.
+ * @param {APIGatewayProxyEventV2} event - API Gateway event containing the user question and session info.
+ * @returns {Promise<object>} API response with answer, sessionId, and chatHistory, or error info.
+ */
 export const handler = async (event: APIGatewayProxyEventV2) => {
   try {
     // Initialize services to get api key from ssm

@@ -10,6 +10,11 @@ import {
 
 const dynamoDBService = new DynamoDBService();
 
+/**
+ * Retrieves a chat session from DynamoDB by userId and sessionId.
+ * @param {APIGatewayProxyEventV2} event - API Gateway event with query parameters userId and sessionId.
+ * @returns {Promise<APIGatewayProxyResultV2>} API response with session data or error info.
+ */
 export const handler = async (
   event: APIGatewayProxyEventV2,
 ): Promise<APIGatewayProxyResultV2> => {
