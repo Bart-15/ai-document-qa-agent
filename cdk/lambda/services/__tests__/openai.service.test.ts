@@ -1,12 +1,14 @@
 import { OpenAI } from "openai";
 
 import { OpenAIService } from "../openai.service";
+import { SSMParameterService } from "../ssm-parameter.service";
 
-// Mock the environment config
-jest.mock("../../../config/environment", () => ({
-  getSanitizedConfig: () => ({
-    OPENAI_API_KEY: "fake-api-key",
-  }),
+// Mock SSMParameterService
+const mockGetParameter = jest.fn();
+jest.mock("../ssm-parameter.service", () => ({
+  SSMParameterService: jest.fn().mockImplementation(() => ({
+    getParameter: mockGetParameter,
+  })),
 }));
 
 // Mock OpenAI client
@@ -27,14 +29,21 @@ jest.mock("openai", () => ({
 }));
 
 describe("OpenAIService", () => {
-  let service: OpenAIService;
+  let openAIService: OpenAIService;
+  let ssmService: SSMParameterService;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.clearAllMocks();
-    service = new OpenAIService();
+    mockGetParameter.mockResolvedValue("fake-api-key");
+    ssmService = new SSMParameterService();
+    openAIService = new OpenAIService(ssmService);
+    await openAIService.init();
   });
 
-  it("should initialize OpenAI client with API key", () => {
+  it("should initialize OpenAI client with API key from SSM", async () => {
+    expect(mockGetParameter).toHaveBeenCalledWith(
+      "/ai-qa-agent/dev/OPENAI_API_KEY",
+    );
     expect(OpenAI).toHaveBeenCalledWith({ apiKey: "fake-api-key" });
   });
 
@@ -45,7 +54,7 @@ describe("OpenAIService", () => {
         data: [{ embedding: mockEmbedding }],
       });
 
-      const result = await service.generateEmbeddings("test input");
+      const result = await openAIService.generateEmbeddings("test input");
 
       expect(mockCreateEmbedding).toHaveBeenCalledWith({
         model: "text-embedding-3-small",
@@ -62,7 +71,7 @@ describe("OpenAIService", () => {
         choices: [{ message: { content: mockResponse } }],
       });
 
-      const result = await service.getCompletion(
+      const result = await openAIService.getCompletion(
         "some context",
         "test question",
       );
