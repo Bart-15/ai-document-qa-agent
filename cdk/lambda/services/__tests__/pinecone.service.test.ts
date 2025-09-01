@@ -5,13 +5,14 @@ import {
 } from "@pinecone-database/pinecone";
 
 import { PineconeService } from "../pinecone.service";
+import { SSMParameterService } from "../ssm-parameter.service";
 
-// Mock the environment config
-jest.mock("../../../config/environment", () => ({
-  getSanitizedConfig: () => ({
-    PINECONE_API_KEY: "fake-api-key",
-    PINECONE_ENVIRONMENT: "fake-env",
-  }),
+// Mock SSMParameterService
+const mockGetParameter = jest.fn();
+jest.mock("../ssm-parameter.service", () => ({
+  SSMParameterService: jest.fn().mockImplementation(() => ({
+    getParameter: mockGetParameter,
+  })),
 }));
 
 // Mock Pinecone and its index
@@ -30,11 +31,16 @@ jest.mock("@pinecone-database/pinecone", () => {
 });
 
 describe("PineconeService", () => {
-  let service: PineconeService;
+  let pineConeService: PineconeService;
+  let ssmService: SSMParameterService;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.clearAllMocks();
-    service = new PineconeService();
+    mockGetParameter.mockResolvedValueOnce("fake-api-key");
+    ssmService = new SSMParameterService();
+    pineConeService = new PineconeService(ssmService);
+
+    await pineConeService.init();
   });
 
   it("should initialize Pinecone client with API key", () => {
@@ -51,7 +57,7 @@ describe("PineconeService", () => {
         },
       ];
 
-      await service.upsertVectors("test-index", vectors);
+      await pineConeService.upsertVectors("test-index", vectors);
 
       expect(mockUpsert).toHaveBeenCalledWith(vectors);
     });
@@ -62,7 +68,12 @@ describe("PineconeService", () => {
       const fakeResponse = { matches: [{ id: "1", score: 0.9 }] };
       mockQuery.mockResolvedValueOnce(fakeResponse);
 
-      const res = await service.queryIndex("test-index", [0.1, 0.2], 3, "src1");
+      const res = await pineConeService.queryIndex(
+        "test-index",
+        [0.1, 0.2],
+        3,
+        "src1",
+      );
 
       expect(mockQuery).toHaveBeenCalledWith({
         vector: [0.1, 0.2],
@@ -82,12 +93,12 @@ describe("PineconeService", () => {
         { id: "3", metadata: {} }, // ignored because no text
       ];
 
-      const result = service.getContext(matches);
+      const result = pineConeService.getContext(matches);
       expect(result).toBe("First\n\nSecond");
     });
 
     it("should return empty string if no matches", () => {
-      expect(service.getContext([])).toBe("");
+      expect(pineConeService.getContext([])).toBe("");
     });
   });
 });
