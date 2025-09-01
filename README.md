@@ -15,6 +15,7 @@ It leverages OpenAI embeddings for semantic understanding, Pinecone for vector s
 - Secure presigned S3 upload URLs
 - Serverless architecture (AWS Lambda, S3, DynamoDB, API Gateway)
 - Easily extensible and configurable
+- 🧪 Includes unit tests for core functionality
 
 ## 3. Tech Stack 🛠️
 
@@ -125,6 +126,21 @@ Your Lambda functions will retrieve these secrets at runtime. Make sure your Lam
 
 - All endpoints expect and return JSON.
 
-## Author 👷🏻‍♂️
+## 8. Running Unit Tests 🧪
 
-Bart Tabusao - Software Engineer 👷🏻‍♂️
+Unit tests are included to ensure the reliability of core functionality.
+
+To run all tests:
+
+```bash
+npm run test
+```
+
+You can also run tests with coverage:
+
+```bash
+npm run test:coverage
+```
+
+Tests are located in the `__tests__` directories throughout the codebase.
+
