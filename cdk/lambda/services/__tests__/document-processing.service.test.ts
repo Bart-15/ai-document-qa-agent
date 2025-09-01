@@ -3,6 +3,7 @@ import { OpenAIEmbeddings } from "@langchain/openai";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 
 import { DocumentProcessingService } from "../document-processing.service";
+import { SSMParameterService } from "../ssm-parameter.service";
 
 // Mock dependencies
 jest.mock("@langchain/openai", () => ({
@@ -24,12 +25,13 @@ jest.mock("@langchain/textsplitters", () => ({
 }));
 
 describe("DocumentProcessingService", () => {
-  let service: DocumentProcessingService;
+  let documentProcessingService: DocumentProcessingService;
+  let ssmService: SSMParameterService;
   let mockEmbedQuery: jest.Mock;
   let mockLoad: jest.Mock;
   let mockSplitDocuments: jest.Mock;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.clearAllMocks();
     mockEmbedQuery = jest.fn();
     mockLoad = jest.fn();
@@ -46,8 +48,9 @@ describe("DocumentProcessingService", () => {
         splitDocuments: mockSplitDocuments,
       }),
     );
-
-    service = new DocumentProcessingService();
+    ssmService = new SSMParameterService();
+    documentProcessingService = new DocumentProcessingService(ssmService);
+    await documentProcessingService.init();
   });
 
   describe("generateEmbedding", () => {
@@ -55,7 +58,8 @@ describe("DocumentProcessingService", () => {
       const mockEmbedding = [0.1, 0.2, 0.3];
       mockEmbedQuery.mockResolvedValue(mockEmbedding);
 
-      const result = await service.generateEmbedding("test text");
+      const result =
+        await documentProcessingService.generateEmbedding("test text");
 
       expect(mockEmbedQuery).toHaveBeenCalledWith("test text");
       expect(result).toEqual(mockEmbedding);
@@ -64,9 +68,9 @@ describe("DocumentProcessingService", () => {
     it("throws error if embedding is empty", async () => {
       mockEmbedQuery.mockResolvedValue([]);
 
-      await expect(service.generateEmbedding("test text")).rejects.toThrow(
-        "Failed to generate embedding for text chunk",
-      );
+      await expect(
+        documentProcessingService.generateEmbedding("test text"),
+      ).rejects.toThrow("Failed to generate embedding for text chunk");
     });
   });
 
@@ -81,7 +85,8 @@ describe("DocumentProcessingService", () => {
       mockLoad.mockResolvedValue(mockDocs);
       mockSplitDocuments.mockResolvedValue(mockChunks);
 
-      const result = await service.processDocument("/test/file.pdf");
+      const result =
+        await documentProcessingService.processDocument("/test/file.pdf");
 
       expect(PDFLoader).toHaveBeenCalledWith("/test/file.pdf");
       expect(mockLoad).toHaveBeenCalled();
@@ -92,18 +97,18 @@ describe("DocumentProcessingService", () => {
     it("throws error if no documents extracted", async () => {
       mockLoad.mockResolvedValue([]);
 
-      await expect(service.processDocument("/test/file.pdf")).rejects.toThrow(
-        "No documents extracted from PDF",
-      );
+      await expect(
+        documentProcessingService.processDocument("/test/file.pdf"),
+      ).rejects.toThrow("No documents extracted from PDF");
     });
 
     it("throws error if no chunks created", async () => {
       mockLoad.mockResolvedValue([{ pageContent: "test", metadata: {} }]);
       mockSplitDocuments.mockResolvedValue([]);
 
-      await expect(service.processDocument("/test/file.pdf")).rejects.toThrow(
-        "No text chunks created from PDF",
-      );
+      await expect(
+        documentProcessingService.processDocument("/test/file.pdf"),
+      ).rejects.toThrow("No text chunks created from PDF");
     });
   });
 });
