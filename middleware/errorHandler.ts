@@ -24,6 +24,14 @@ const validateOrigin = (requestOrigin: string | undefined): string => {
     : allowedOrigins[0];
 };
 
+/**
+ * Creates a standardized API Gateway response with CORS headers.
+ * @template T
+ * @param {number} statusCode - HTTP status code.
+ * @param {Partial<T>} body - Response body object.
+ * @param {APIGatewayProxyEventV2} [event] - Optional API Gateway event for origin detection.
+ * @returns {APIGatewayProxyResult} API Gateway response object.
+ */
 export function createResponse<T>(
   statusCode: number,
   body: Partial<T>,
@@ -42,6 +50,12 @@ export function createResponse<T>(
   };
 }
 
+/**
+ * Handles errors and returns a standardized API Gateway error response.
+ * @param {unknown} error - The error to handle.
+ * @param {APIGatewayProxyEventV2} [event] - Optional API Gateway event for CORS.
+ * @returns {APIGatewayProxyResult} API Gateway error response object.
+ */
 export function handleError(error: unknown, event?: APIGatewayProxyEventV2) {
   if (error instanceof ZodError) {
     const errMessages = error.issues.map((issue) => ({
